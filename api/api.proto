@@ -36,4 +36,5 @@ message AddressBook {
 service Service {
   rpc GetAddressBook(google.protobuf.Empty) returns (AddressBook);
   rpc GetPerson(Person) returns (Person);
+  rpc AddPerson(Person) returns (google.protobuf.Empty);
 }

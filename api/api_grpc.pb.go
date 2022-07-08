@@ -25,6 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ServiceClient interface {
 	GetAddressBook(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AddressBook, error)
 	GetPerson(ctx context.Context, in *Person, opts ...grpc.CallOption) (*Person, error)
+	AddPerson(ctx context.Context, in *Person, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type serviceClient struct {
@@ -53,12 +54,22 @@ func (c *serviceClient) GetPerson(ctx context.Context, in *Person, opts ...grpc.
 	return out, nil
 }
 
+func (c *serviceClient) AddPerson(ctx context.Context, in *Person, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/main.Service/AddPerson", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServiceServer is the server API for Service service.
 // All implementations must embed UnimplementedServiceServer
 // for forward compatibility
 type ServiceServer interface {
 	GetAddressBook(context.Context, *emptypb.Empty) (*AddressBook, error)
 	GetPerson(context.Context, *Person) (*Person, error)
+	AddPerson(context.Context, *Person) (*emptypb.Empty, error)
 	mustEmbedUnimplementedServiceServer()
 }
 
@@ -71,6 +82,9 @@ func (UnimplementedServiceServer) GetAddressBook(context.Context, *emptypb.Empty
 }
 func (UnimplementedServiceServer) GetPerson(context.Context, *Person) (*Person, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPerson not implemented")
+}
+func (UnimplementedServiceServer) AddPerson(context.Context, *Person) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddPerson not implemented")
 }
 func (UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
 
@@ -121,6 +135,24 @@ func _Service_GetPerson_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Service_AddPerson_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Person)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).AddPerson(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/main.Service/AddPerson",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).AddPerson(ctx, req.(*Person))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Service_ServiceDesc is the grpc.ServiceDesc for Service service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -135,6 +167,10 @@ var Service_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPerson",
 			Handler:    _Service_GetPerson_Handler,
+		},
+		{
+			MethodName: "AddPerson",
+			Handler:    _Service_AddPerson_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
